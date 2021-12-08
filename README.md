@@ -14,6 +14,11 @@ A NTP clock with PM display
 * TM1637 4 digit 7 segment
 * push button
 
+## Information
+
+The clock uses the FastLED library for ESP8266 which makes it easily scalable. Any kind of LED matrix can be used for bigger or smaller projects.
+
+## Pictures:
 
 ![Clock](photos/clock.png)
 
