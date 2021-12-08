@@ -1,7 +1,7 @@
 # SCClock
 A NTP clock with PM display
 
-## Features:
+## Features
 * NTP sync with the server of LNE-SYRTE in Paris
 * Show the PM values of one or multiple sensors from the Sensor.Community API
 * Configuration interface on the local network like Sensor.Community
