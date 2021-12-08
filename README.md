@@ -8,7 +8,7 @@ A NTP clock with PM display
 * A few functions: automatic change, fading, random order 
 
 
-## BOM:
+## BOM
 * NodeMCU 0.9
 * WS2812 8x8 LED Matrix
 * TM1637 4 digit 7 segment
@@ -18,7 +18,7 @@ A NTP clock with PM display
 
 The clock uses the FastLED library for ESP8266 which makes it easily scalable. Any kind of LED matrix can be used for bigger or smaller projects.
 
-## Pictures:
+## Pictures
 
 ![Clock](photos/clock.png)
 
