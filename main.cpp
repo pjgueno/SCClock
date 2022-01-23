@@ -23,7 +23,6 @@ String SOFTWARE_VERSION(SOFTWARE_VERSION_STR);
 #include <ESP8266mDNS.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
-//#include <Adafruit_NeoPixel.h>
 #include <DNSServer.h>
 #include <StreamString.h>
 #include <FastLED.h>
@@ -94,6 +93,7 @@ unsigned int array_size;
 unsigned int last_index;
 bool clock_selftest_failed = false;
 String liste_save;
+String currentSensor;
 
 //LED declarations
 
@@ -213,7 +213,44 @@ struct struct_wifiInfo
 struct struct_wifiInfo *wifiInfo;
 uint8_t count_wifiInfo;
 
-    /*****************************************************************
+
+
+/*****************************************************************
+ * Physical button                                    *
+ *****************************************************************/
+
+#define BUTTON_PIN 5
+bool force_call = false;
+bool show_id = false;
+
+ICACHE_RAM_ATTR void buttonpush()
+{
+  if (force_call == false){  // à voir pour limiter le bouton après 1er appui
+
+    if (cfg::random_order == true)
+    {
+      unsigned int random_index = rand() % (array_size);
+      last_index = random_index;
+    }
+    else
+    {
+      if (last_index < (array_size - 1))
+      {
+        last_index += 1;
+      }
+      else
+      {
+        last_index = 0;
+      }
+    }
+    force_call = true;
+    show_id = true;
+  }
+}
+
+
+
+/*****************************************************************
  * write config to spiffs                                        *
  *****************************************************************/
     static bool writeConfig()
@@ -629,7 +666,7 @@ static void add_radio_input(String &page_content, const ConfigShapeId cfgid, con
       // Enable Pagination
       page_content += FPSTR(WEB_ROOT_PAGE_CONTENT);
       page_content.replace(F("{t}"), FPSTR(INTL_CURRENT_DATA));
-      page_content.replace(F("{s}"), FPSTR(INTL_DEVICE_STATUS));
+      page_content.replace(F("{c}"), FPSTR(INTL_CHANGE_SENSOR));
       page_content.replace(F("{conf}"), FPSTR(INTL_CONFIGURATION));
       page_content.replace(F("{restart}"), FPSTR(INTL_RESTART_SENSOR));
       end_html_page(page_content);
@@ -890,6 +927,7 @@ static void webserver_values()
   }
 
   page_content += "PM parameter: " + pm_type + FPSTR(WEB_B_BR_BR);
+  page_content += "Current sensor: " + currentSensor + FPSTR(WEB_B_BR_BR);
 
   auto add_table_value = [&page_content](const __FlashStringHelper *sensor, const __FlashStringHelper *param, const String &value, const String &unit)
   {
@@ -1040,6 +1078,60 @@ static void webserver_static()
   }
 }
 
+
+/*****************************************************************
+ * Software button                                    *
+ *****************************************************************/
+
+void softbuttonpush()
+{
+    if (cfg::random_order == true)
+    {
+      unsigned int random_index = rand() % (array_size);
+      last_index = random_index;
+    }
+    else
+    {
+      if (last_index < (array_size - 1))
+      {
+        last_index += 1;
+      }
+      else
+      {
+        last_index = 0;
+      }
+    }
+    force_call = true;
+    show_id = true;
+
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      sendHttpRedirect();
+    }
+    else
+    {
+      if (!webserver_request_auth())
+      {
+        return;
+      }
+
+      RESERVE_STRING(page_content, XLARGE_STR);
+      start_html_page(page_content, emptyString);
+      Debug.println("ws: root ...");
+
+      // Enable Pagination
+      page_content += FPSTR(WEB_ROOT_PAGE_CONTENT);
+      page_content.replace(F("{t}"), FPSTR(INTL_CURRENT_DATA));
+      page_content.replace(F("{c}"), FPSTR(INTL_CHANGE_SENSOR));
+      page_content.replace(F("{conf}"), FPSTR(INTL_CONFIGURATION));
+      page_content.replace(F("{restart}"), FPSTR(INTL_RESTART_SENSOR));
+      end_html_page(page_content);
+    }
+}
+
+
+
+
 /*****************************************************************
  * Webserver setup                                               *
  *****************************************************************/
@@ -1050,6 +1142,7 @@ static void setup_webserver()
   server.on(F("/values"), webserver_values);
   server.on(F("/removeConfig"), webserver_removeConfig);
   server.on(F("/reset"), webserver_reset);
+  server.on(F("/change"), softbuttonpush);
   server.on(F(STATIC_PREFIX), webserver_static);
   server.onNotFound(webserver_not_found);
 
@@ -1309,6 +1402,7 @@ float getData(const char *url, unsigned int pm_type)
         {
           if (sensorAPI["id"].as<String>() == sensor["sensor"])
           {
+            currentSensor = sensorAPI["id"].as<String>();
             sensor["time"] = object["timestamp"].as<String>();
             break;
           }
@@ -1503,37 +1597,6 @@ struct RGB interpolate(float valueSensor)
   // Debug.println(result.B);
 
   return result;
-}
-
-//Button
-
-#define BUTTON_PIN 5
-bool force_call = false;
-bool show_id = false;
-
-ICACHE_RAM_ATTR void buttonpush()
-{
-  if (force_call == false){  // à voir pour limiter le bouton après 1er appui
-
-    if (cfg::random_order == true)
-    {
-      unsigned int random_index = rand() % (array_size);
-      last_index = random_index;
-    }
-    else
-    {
-      if (last_index < (array_size - 1))
-      {
-        last_index += 1;
-      }
-      else
-      {
-        last_index = 0;
-      }
-    }
-    force_call = true;
-    show_id = true;
-  }
 }
 
 void setup()

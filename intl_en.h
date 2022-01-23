@@ -31,6 +31,7 @@ const char INTL_RESTART_SENSOR[] PROGMEM = "Restart clock";
 #define INTL_HOME "Home"
 #define INTL_BACK_TO_HOME "Back to home page"
 const char INTL_CURRENT_DATA[] PROGMEM = "Last values";
+const char INTL_CHANGE_SENSOR[] PROGMEM = "Change sensor";
 const char INTL_DEVICE_STATUS[] PROGMEM = "Device status";
 #define INTL_CONFIGURATION_DELETE "Delete configuration"
 #define INTL_CONFIGURATION_REALLY_DELETE "Are you sure you want to delete the configuration?"

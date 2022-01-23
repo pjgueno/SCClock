@@ -26,33 +26,7 @@
 #include "./utils.h"
 #include "./defines.h"
 #include "./ext_def.h"
-#include "./ca-root.h"
 
-
-/*****************************************************************
- * aircms.online helper functions                                *
- *****************************************************************/
-String sha1Hex(const String& s) {
-	char sha1sum_output[20];
-
-	br_sha1_context sc;
-	br_sha1_init(&sc);
-	br_sha1_update(&sc, s.c_str(), s.length());
-	br_sha1_out(&sc, sha1sum_output);
-	String r;
-	for (uint16_t i = 0; i < 20; i++) {
-		char hex[3];
-		snprintf(hex, sizeof(hex), "%02x", sha1sum_output[i]);
-		r += hex;
-	}
-	return r;
-}
-
-String hmac1(const String& secret, const String& s) {
-	String str = sha1Hex(s);
-	str = secret + str;
-	return sha1Hex(str);
-}
 
 String tmpl(const __FlashStringHelper* patt, const String& value) {
 	String s = patt;
@@ -141,22 +115,6 @@ String delayToString(unsigned time_ms) {
 	return s;
 }
 
-BearSSL::X509List x509_dst_root_ca(dst_root_ca_x3);
-
-void configureCACertTrustAnchor(WiFiClientSecure* client) {
-	constexpr time_t fw_built_year = (__DATE__[ 7] - '0') * 1000 + \
-							  (__DATE__[ 8] - '0') *  100 + \
-							  (__DATE__[ 9] - '0') *   10 + \
-							  (__DATE__[10] - '0');
-	if (time(nullptr) < (fw_built_year - 1970) * 365 * 24 * 3600) {
-		Debug.println("Time incorrect; Disabling CA verification.");
-		client->setInsecure();
-	}
-	else {
-		client->setTrustAnchors(&x509_dst_root_ca);
-	}
-}
-
 bool launchUpdateLoader(const String& md5) {
 
 #pragma GCC diagnostic push
@@ -188,78 +146,6 @@ bool launchUpdateLoader(const String& md5) {
 	ESP.eraseConfig();
 	return true;
 #pragma GCC diagnostic pop
-}
-
-/*****************************************************************
- * check display values, return '-' if undefined                 *
- *****************************************************************/
-String check_display_value(double value, double undef, uint8_t len, uint8_t str_len) {
-	RESERVE_STRING(s, 15);
-	s = (value != undef ? String(value, len) : String("-"));
-	while (s.length() < str_len) {
-		s = " " + s;
-	}
-	return s;
-}
-
-/*****************************************************************
- * add value to json string                                  *
- *****************************************************************/
-void add_Value2Json(String& res, const __FlashStringHelper* type, const String& value) {
-	RESERVE_STRING(s, SMALL_STR);
-
-	s = F("{\"value_type\":\"{t}\",\"value\":\"{v}\"},");
-	s.replace("{t}", String(type));
-	s.replace("{v}", value);
-	res += s;
-}
-
-void add_Value2Json(String& res, const __FlashStringHelper* type, const __FlashStringHelper* debug_type, const float& value) {
-	Debug.println(value);
-	add_Value2Json(res, type, String(value));
-}
-
-float readCorrectionOffset(const char* correction) {
-	char* pEnd = nullptr;
-	// Avoiding atof() here as this adds a lot (~ 9kb) of code size
-	float r = float(strtol(correction, &pEnd, 10));
-	if (pEnd && pEnd[0] == '.' && pEnd[1] >= '0' && pEnd[1] <= '9') {
-		r += (r >= 0.0f ? 1.0f : -1.0f) * ((pEnd[1] - '0') / 10.0f);
-	}
-	return r;
-}
-
-/*****************************************************************
- * helper to see if a given string is numeric                    *
- *****************************************************************/
-bool isNumeric(const String& str) {
-	size_t stringLength = str.length();
-
-	if (stringLength == 0) {
-		return false;
-	}
-
-	bool seenDecimal = false;
-
-	for (size_t i = 0; i < stringLength; ++i) {
-		if (i == 0 && str.charAt(0) == '-') {
-			continue;
-		}
-
-		if (isDigit(str.charAt(i))) {
-			continue;
-		}
-
-		if (str.charAt(i) == '.') {
-			if (seenDecimal) {
-				return false;
-			}
-			seenDecimal = true;
-			continue;
-		}
-		return false;
-	}
-	return true;
 }
 
 
