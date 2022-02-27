@@ -14,6 +14,7 @@ String SOFTWARE_VERSION(SOFTWARE_VERSION_STR);
 
 #include <ArduinoJson.h>
 #define JSON_BUFFER_SIZE 2300
+#define JSON_BUFFER_SIZE2 2500
 
 #include <FastLED.h>
 #include <TM1637Display.h>
@@ -194,7 +195,6 @@ bool connected = false;
 
 //Values table
 
-//DynamicJsonDocument sensors_json(JSON_BUFFER_SIZE);
 StaticJsonDocument<1000> sensors_json;
 JsonArray sensors_list = sensors_json.to<JsonArray>();
 
@@ -1344,8 +1344,8 @@ float getData(const char *url, unsigned int pm_type)
   }
 
   String reponseAPI;
-  DynamicJsonDocument doc(JSON_BUFFER_SIZE);
-  char reponseJSON[JSON_BUFFER_SIZE];
+  DynamicJsonDocument doc(JSON_BUFFER_SIZE2);
+  char reponseJSON[JSON_BUFFER_SIZE2];
   if (!client.connect("data.sensor.community", httpPort))
   {
     Debug.println("connection failed");
@@ -1780,9 +1780,12 @@ void loop()
       strcpy(url_ok, URL_API_SENSORCOMMUNITY);
       strcat(url_ok, sensorNr);
       strcat(url_ok, "/");
+      Debug.print("URL API:");
+      Debug.println(url_ok);
 
       PMvalue = getData(url_ok, cfg::pm_choice);
       serializeJsonPretty(sensors_json, Debug);
+      Debug.println("");
       displayColor = interpolate(PMvalue);
 
       if (!(displayColor.R == 0 && displayColor.G == 0 && displayColor.B == 0))
@@ -1812,9 +1815,12 @@ if (force_call == true){
   strcpy(url_ok, URL_API_SENSORCOMMUNITY);
   strcat(url_ok, sensorNr);
   strcat(url_ok, "/");
+  Debug.print("URL API:");
+  Debug.println(url_ok);
 
   PMvalue = getData(url_ok, cfg::pm_choice);
   serializeJsonPretty(sensors_json, Debug);
+  Debug.println("");
   displayColor = interpolate(PMvalue);
 
   if (!(displayColor.R == 0 && displayColor.G == 0 && displayColor.B == 0))
@@ -1827,6 +1833,7 @@ if (force_call == true){
 
   if (show_id == true)
   {
+    
     scanf("%s", sensorNr);
     int sensorNr_as_int = atoi(sensorNr);
     if (sensorNr_as_int < 10000)
@@ -1837,7 +1844,14 @@ if (force_call == true){
     }
     else if (sensorNr_as_int >= 10000 && sensorNr_as_int < 100000)
     {
-      display.showNumberDec(sensorNr_as_int, false, 5, 0);
+    char part1[4];
+    part1[0] = sensorNr[0];
+    part1[1] = sensorNr[1];
+    part1[2] = sensorNr[2];
+    part1[3] = sensorNr[3];
+    scanf("%s", part1);
+    int sensorNr_as_int1 = atoi(part1);
+      display.showNumberDec(sensorNr_as_int1, false);
       delay(1000);
       display.clear();
       display.showNumberDec(sensorNr_as_int % 10, false, 1, 0);
