@@ -769,6 +769,7 @@ static void add_radio_input(String &page_content, const ConfigShapeId cfgid, con
       page_content += FPSTR(TABLE_TAG_CLOSE_BR);
       page_content += F("<hr/>\n<br/>");
       add_form_input(page_content, Config_brightness, FPSTR(INTL_BRIGHTNESS), 3);
+      page_content += F("<br/>");
       add_form_checkbox(Config_random_order, FPSTR(INTL_RANDOM));
       add_form_checkbox(Config_auto_change, FPSTR(INTL_AUTO));
       add_form_checkbox(Config_fade_led, FPSTR(INTL_FADE));
