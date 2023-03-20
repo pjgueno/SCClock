@@ -17,10 +17,11 @@ Bool		auto_change
 Bool		fade_led
 UInt        pm_choice 
 Int  		time_offset
+UInt        brightness
 """
 #can use Uchar? for 0-255 
 
-with open("/Users/PJ/CODES/PIO_projects/SC_pendule/clock-cfg.h", "w") as h:
+with open("clock-cfg.h", "w") as h:
     print("""
 
 // This file is generated, please do not edit.

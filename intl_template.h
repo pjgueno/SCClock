@@ -70,5 +70,6 @@ const char INTL_RANDOM[] PROGMEM = "";
 const char INTL_AUTO[] PROGMEM = "";
 const char INTL_FADE[] PROGMEM = "";
 const char INTL_PM[] PROGMEM = "";
+const char INTL_BRIGHTNESS[] PROGMEM = "";
 
 #include "./airrohr-logo-common.h"

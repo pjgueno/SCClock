@@ -54,6 +54,7 @@ namespace cfg
   bool auto_change = AUTO_CHANGE;
   bool fade_led = FADE_LED;
   unsigned int pm_choice = PM_CHOICE; //uint8_t
+  unsigned int brightness = BRIGHTNESS;
 
   // credentials for basic auth of internal web server
   bool www_basicauth_enabled = WWW_BASICAUTH_ENABLED;
@@ -100,9 +101,9 @@ String currentSensor;
 
 #define LED_PIN 2
 #define LED_COUNT 64
-unsigned int brightness = 50;
 CRGB colorLED;
 bool down = true;
+unsigned int fader = cfg::brightness;
 
 CRGB leds[LED_COUNT];
 
@@ -767,6 +768,7 @@ static void add_radio_input(String &page_content, const ConfigShapeId cfgid, con
       add_form_input(page_content, Config_time_offset, FPSTR(INTL_TIME_OFFSET), 2);
       page_content += FPSTR(TABLE_TAG_CLOSE_BR);
       page_content += F("<hr/>\n<br/>");
+      add_form_input(page_content, Config_brightness, FPSTR(INTL_BRIGHTNESS), 3);
       add_form_checkbox(Config_random_order, FPSTR(INTL_RANDOM));
       add_form_checkbox(Config_auto_change, FPSTR(INTL_AUTO));
       add_form_checkbox(Config_fade_led, FPSTR(INTL_FADE));
@@ -1458,145 +1460,123 @@ float getData(const char *url, unsigned int pm_type)
   delay(1000);
   //client.flush();
   //client.stop();
-  doc.garbageCollect();
+  doc.garbageCollect();  //ENLEVE TOUS LES GARBAGE COLLECT QUNAD DERAILLE
   Debug.println("Check Memory:");
   Debug.print("doc:");
   Debug.println(doc.memoryUsage());
   return -1.0;
 }
 
+extern const uint8_t PROGMEM gamma8[];
 
-struct RGB interpolate(float valueSensor)
+bool gamma_correction = GAMMA;
+
+struct RGB interpolate(float valueSensor, int step1, int step2, int step3, int step4, int step5, bool correction)
 {
 
-  byte endColorValueR;
-  byte startColorValueR;
-  byte endColorValueG;
-  byte startColorValueG;
-  byte endColorValueB;
-  byte startColorValueB;
-  int valueLimitHigh;
-  int valueLimitLow;
-  struct RGB result;
+	byte endColorValueR;
+	byte startColorValueR;
+	byte endColorValueG;
+	byte startColorValueG;
+	byte endColorValueB;
+	byte startColorValueB;
 
-  if (valueSensor >= 0 && valueSensor <= 10)
-  {
-    //    result.R = 0;
-    //    result.G = 121;
-    //    result.B = 107;
+	int valueLimitHigh;
+	int valueLimitLow;
+	struct RGB result;
+	uint16_t rgb565;
 
-    result.R = 0;
-    result.G = 255; //Green
-    result.B = 0;
-  }
-  else if (valueSensor > 10 && valueSensor <= 100)
-  {
+	if (valueSensor == 0)
+	{
 
-    if (valueSensor <= 20)
-    {
-      //valueLimit = 20;
-      //      endColorValueR = 249;
-      //      startColorValueR = 0;
-      //      endColorValueG = 168;
-      //      startColorValueG = 121;
-      //      endColorValueB = 37;
-      //      startColorValueB = 107;
-
-      valueLimitHigh = 20;
-      valueLimitLow = 10;
-      endColorValueR = 255;
+		result.R = 0;
+		result.G = 121; 
+		result.B = 107;
+	}
+	else if (valueSensor > 0 && valueSensor <= step4)
+	{
+		if (valueSensor <= step1)
+		{
+		result.R = 0;
+		result.G = 121; 
+		result.B = 107;
+		}
+		else if (valueSensor > step1 && valueSensor <= step2)
+		{
+			valueLimitHigh = step2;
+			valueLimitLow = step1;
+      endColorValueR = 249;
       startColorValueR = 0;
-      endColorValueG = 255;
-      startColorValueG = 255; //Green to Yellow
+      endColorValueG = 168;
+      startColorValueG = 121;
+      endColorValueB = 37;
+      startColorValueB = 107;
+		}
+		else if (valueSensor > step2 && valueSensor <= step3)
+		{
+			valueLimitHigh = step3;
+			valueLimitLow = step2;
+      endColorValueR = 230;
+      startColorValueR = 249;
+      endColorValueG = 81;
+      startColorValueG = 168;
+      endColorValueB = 0;
+      startColorValueB = 37;
+		}
+		else if (valueSensor > step3 && valueSensor <= step4)
+		{
+
+			valueLimitHigh = step4;
+			valueLimitLow = step3;
+      endColorValueR = 221;
+      startColorValueR = 230;
+      endColorValueG = 44;
+      startColorValueG = 81;
       endColorValueB = 0;
       startColorValueB = 0;
-    }
-    else if (valueSensor > 20 && valueSensor <= 40)
-    {
-      //      valueLimit = 40;
-      //      endColorValueR = 230;
-      //      startColorValueR = 249;
-      //      endColorValueG = 81;
-      //      startColorValueG = 168;
-      //      endColorValueB = 0;
-      //      startColorValueB = 37;
+		}
+    else if (valueSensor > step4 && valueSensor <= step5)
+		{
 
-      valueLimitHigh = 40;
-      valueLimitLow = 20;
-      endColorValueR = 255;
-      startColorValueR = 255;
-      endColorValueG = 127; // Yellow to orange
-      startColorValueG = 255;
-      endColorValueB = 0;
-      startColorValueB = 0;
-    }
-    else if (valueSensor > 40 && valueSensor <= 60)
-    {
-      //      valueLimit = 60;
-      //      endColorValueR = 221;
-      //      startColorValueR = 230;
-      //      endColorValueG = 44;
-      //      startColorValueG = 81;
-      //      endColorValueB = 0;
-      //      startColorValueB = 0;
-
-      valueLimitHigh = 60;
-      valueLimitLow = 40;
-      endColorValueR = 255;
-      startColorValueR = 255;
+			valueLimitHigh = step4;
+			valueLimitLow = step3;
+      endColorValueR = 150;
+      startColorValueR = 221;
       endColorValueG = 0;
-      startColorValueG = 127; // Orange to Red
-      endColorValueB = 0;
+      startColorValueG = 44;
+      endColorValueB = 132;
       startColorValueB = 0;
-    }
-    else
-    {
-      //      valueLimit = 100;
-      //      endColorValueR = 150;
-      //      startColorValueR = 221;
-      //      endColorValueG = 0;
-      //      startColorValueG = 44;
-      //      endColorValueB = 132;
-      //      startColorValueB = 0;
+		}
 
-      valueLimitHigh = 100;
-      valueLimitLow = 60;
-      endColorValueR = 255;
-      startColorValueR = 255;
-      endColorValueG = 0; // RED to Violet
-      startColorValueG = 0;
-      endColorValueB = 255;
-      startColorValueB = 0;
-    }
+		result.R = (byte)(((endColorValueR - startColorValueR) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueR);
+		result.G = (byte)(((endColorValueG - startColorValueG) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueG);
+		result.B = (byte)(((endColorValueB - startColorValueB) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueB);
+	}
+	else if (valueSensor > step5)
+	{
+		result.R = 150;
+		result.G = 0; //violet
+		result.B = 132;
+	}
+	else
+	{
+		result.R = 0;
+		result.G = 0;
+		result.B = 0;
+	}
 
-    result.R = (byte)(((endColorValueR - startColorValueR) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueR);
-    result.G = (byte)(((endColorValueG - startColorValueG) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueG);
-    result.B = (byte)(((endColorValueB - startColorValueB) * ((valueSensor - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueB);
-  }
-  else if (valueSensor > 100)
-  {
+	//Gamma Correction
 
-    //    result.R = 150;
-    //    result.G = 0;
-    //    result.B = 132;
+	if (correction == true)
+	{
+		result.R = pgm_read_byte(&gamma8[result.R]);
+		result.G = pgm_read_byte(&gamma8[result.G]);
+		result.B = pgm_read_byte(&gamma8[result.B]);
+	}
 
-    result.R = 255;
-    result.G = 0;
-    result.B = 255;
-  }
-  else
-  {
-
-    result.R = 0;
-    result.G = 0;
-    result.B = 0;
-  }
-
-  // Debug.println(result.R);
-  // Debug.println(result.G);
-  // Debug.println(result.B);
-
-  return result;
+	rgb565 = ((result.R & 0b11111000) << 8) | ((result.G & 0b11111100) << 3) | (result.B >> 3);
+	//Debug.println(rgb565); // to get list of color if drawGradient is acitvated
+	return result;
 }
 
 void setup()
@@ -1611,7 +1591,7 @@ void setup()
   display.setSegments(initialisation);
 
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, LED_COUNT); //swap R and G !
-  FastLED.setBrightness(brightness); //max=255
+  FastLED.setBrightness(cfg::brightness); //max=255
 
   esp_chipid = std::move(String(ESP.getChipId()));
   esp_mac_id = std::move(String(WiFi.macAddress().c_str()));
@@ -1689,9 +1669,21 @@ void setup()
     PMvalue = getData(url_ok, cfg::pm_choice); //first getdata
     serializeJsonPretty(sensors_json, Debug);
     Debug.println("");
-    displayColor = interpolate(PMvalue);
+    
+      switch(cfg::pm_choice) {
+  case 0:
+    displayColor = interpolate(PMvalue, 10, 20, 40, 60, 100, gamma_correction);
+    break;
+  case 1:
+    displayColor = interpolate(PMvalue, 20, 40, 60, 100, 500, gamma_correction);
+    break;
+  case 2:
+    displayColor = interpolate(PMvalue,10, 20, 40, 60, 100, gamma_correction);
+    break;
+}
+
     colorLED = CRGB(displayColor.R, displayColor.G, displayColor.B);
-    FastLED.setBrightness(brightness);
+    FastLED.setBrightness(cfg::brightness);
     fill_solid(leds, LED_COUNT, colorLED);
     FastLED.show();
     LED_milli = millis();
@@ -1786,19 +1778,33 @@ void loop()
       PMvalue = getData(url_ok, cfg::pm_choice);
       serializeJsonPretty(sensors_json, Debug);
       Debug.println("");
-      displayColor = interpolate(PMvalue);
+
+
+  switch(cfg::pm_choice) {
+  case 0:
+    displayColor = interpolate(PMvalue, 10, 20, 40, 60, 100, gamma_correction);
+    break;
+  case 1:
+    displayColor = interpolate(PMvalue, 20, 40, 60, 100, 500, gamma_correction);
+    break;
+  case 2:
+    displayColor = interpolate(PMvalue,10, 20, 40, 60, 100, gamma_correction);
+    break;
+}
+
+
+
+      
 
       if (!(displayColor.R == 0 && displayColor.G == 0 && displayColor.B == 0))
       {
         colorLED = CRGB(displayColor.R, displayColor.G, displayColor.B);
-        FastLED.setBrightness(brightness);
+        FastLED.setBrightness(cfg::brightness);
         fill_solid(leds, LED_COUNT, colorLED);
         FastLED.show();
       }
 
       SCcall = millis();
-
-      
       sensors_json.garbageCollect(); //empty buffer of JSONdocument after geting value
       Debug.println("Check Memory:");
       Debug.print("sensors_json:");
@@ -1821,12 +1827,25 @@ if (force_call == true){
   PMvalue = getData(url_ok, cfg::pm_choice);
   serializeJsonPretty(sensors_json, Debug);
   Debug.println("");
-  displayColor = interpolate(PMvalue);
+
+
+   switch(cfg::pm_choice) {
+  case 0:
+    displayColor = interpolate(PMvalue, 10, 20, 40, 60, 100, gamma_correction);
+    break;
+  case 1:
+    displayColor = interpolate(PMvalue, 20, 40, 60, 100, 500, gamma_correction);
+    break;
+  case 2:
+    displayColor = interpolate(PMvalue,10, 20, 40, 60, 100, gamma_correction);
+    break;
+}
+
 
   if (!(displayColor.R == 0 && displayColor.G == 0 && displayColor.B == 0))
   {
     colorLED = CRGB(displayColor.R, displayColor.G, displayColor.B);
-    FastLED.setBrightness(brightness);
+    FastLED.setBrightness(cfg::brightness);
     fill_solid(leds, LED_COUNT, colorLED);
     FastLED.show();
   }
@@ -1877,25 +1896,25 @@ if (force_call == true){
   if (cfg::fade_led == true)
   {
     if (millis() - LED_milli > 100){
-      if (brightness > 5 && down == true)
+      if (fader > 5 && down == true)
       {
-        brightness -= 1;
+        fader -= 1;
       }
-      else if (brightness == 5 && down == true)
+      else if (fader == 5 && down == true)
       {
-        brightness += 1;
+        fader += 1;
         down = false;
       }
-      else if (brightness < 50 && down == false)
+      else if (fader < cfg::brightness && down == false)
       {
-        brightness += 1;
+        fader += 1;
       }
-      else if (brightness == 50 && down == false)
+      else if (fader == cfg::brightness && down == false)
       {
-        brightness -= 1;
+        fader -= 1;
         down = true;
       }
-      FastLED.setBrightness(brightness);
+      FastLED.setBrightness(fader);
       fill_solid(leds, LED_COUNT, colorLED);
       FastLED.show();
       LED_milli = millis();
@@ -1912,3 +1931,21 @@ if (force_call == true){
   MDNS.update();
   }
 }
+
+const uint8_t PROGMEM gamma8[] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+	2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5,
+	5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10,
+	10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+	17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
+	25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
+	37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
+	51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
+	69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
+	90, 92, 93, 95, 96, 98, 99, 101, 102, 104, 105, 107, 109, 110, 112, 114,
+	115, 117, 119, 120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142,
+	144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175,
+	177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+	215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};

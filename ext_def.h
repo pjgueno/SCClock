@@ -22,4 +22,7 @@ const char SENSORS_CHOSEN[] PROGMEM = "2492,4686,10557";
 #define FS_SSID ""
 #define FS_PWD ""
 
-    static const char URL_API_SENSORCOMMUNITY[] PROGMEM = "https://data.sensor.community/airrohr/v1/sensor/";
+static const char URL_API_SENSORCOMMUNITY[] PROGMEM = "https://data.sensor.community/airrohr/v1/sensor/";
+
+#define GAMMA true
+#define BRIGHTNESS 50;

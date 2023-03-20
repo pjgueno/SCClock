@@ -43,6 +43,7 @@ enum ConfigShapeId {
 	Config_fade_led,
 	Config_pm_choice,
 	Config_time_offset,
+	Config_brightness,
 };
 static constexpr char CFG_KEY_CURRENT_LANG[] PROGMEM = "current_lang";
 static constexpr char CFG_KEY_WLANSSID[] PROGMEM = "wlanssid";
@@ -60,6 +61,7 @@ static constexpr char CFG_KEY_AUTO_CHANGE[] PROGMEM = "auto_change";
 static constexpr char CFG_KEY_FADE_LED[] PROGMEM = "fade_led";
 static constexpr char CFG_KEY_PM_CHOICE[] PROGMEM = "pm_choice";
 static constexpr char CFG_KEY_TIME_OFFSET[] PROGMEM = "time_offset";
+static constexpr char CFG_KEY_BRIGHTNESS[] PROGMEM = "brightness";
 static constexpr ConfigShapeEntry configShape[] PROGMEM = {
 	{ Config_Type_String, sizeof(cfg::current_lang)-1, CFG_KEY_CURRENT_LANG, cfg::current_lang },
 	{ Config_Type_String, sizeof(cfg::wlanssid)-1, CFG_KEY_WLANSSID, cfg::wlanssid },
@@ -77,4 +79,5 @@ static constexpr ConfigShapeEntry configShape[] PROGMEM = {
 	{ Config_Type_Bool, 0, CFG_KEY_FADE_LED, &cfg::fade_led },
 	{ Config_Type_UInt, 0, CFG_KEY_PM_CHOICE, &cfg::pm_choice },
 	{ Config_Type_Int, 0, CFG_KEY_TIME_OFFSET, &cfg::time_offset },
+	{ Config_Type_UInt, 0, CFG_KEY_BRIGHTNESS, &cfg::brightness },
 };
